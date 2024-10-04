@@ -25,7 +25,7 @@ export class DecrementStockUseCase {
     product.stock -= quantity;
 
     if (product.stock === 0) {
-      await this.emailService.notifyStockDepleted('david@rober.fr', product);
+      await this.emailService.notifyStockDepleted('adming@test.fr', product);
     }
 
     await this.productRepository.save(product);
