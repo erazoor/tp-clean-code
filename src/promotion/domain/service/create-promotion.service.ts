@@ -14,9 +14,6 @@ export class CreatePromotionUseCase {
     code: string,
     amount?: number,
   ): Promise<Promotion> {
-    if (!name || !code) {
-      throw new Error('Promotion name and code are required.');
-    }
     const promotion = new Promotion(name, code, amount);
 
     return this.promotionRepository.save(promotion);

@@ -22,10 +22,7 @@ export class ModifyProductUseCase {
       throw new NotFoundException('Product not found');
     }
 
-    product.name = name;
-    product.price = price;
-    product.description = description;
-    product.stock = stock ?? product.stock;
+    product.modify(name, price, description, stock);
 
     return this.productRepository.save(product);
   }

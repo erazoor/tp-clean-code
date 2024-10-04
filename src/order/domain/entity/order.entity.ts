@@ -31,11 +31,8 @@ export enum OrderStatus {
 @Entity()
 export class Order {
   static MAX_ITEMS = 5;
-
   static AMOUNT_MINIMUM = 5;
-
   static AMOUNT_MAXIMUM = 500;
-
   static SHIPPING_COST = 5;
 
   @CreateDateColumn()
@@ -220,22 +217,26 @@ export class Order {
     return `invoice number ${this.id}, with items: ${itemsNames}`;
   }
 
-  addProduct(
-    product: { productName: string; price: number },
-    quantity: number,
-  ): void {
+  addProduct(product: Product, quantity: number): void {
+    if (this.status !== 'PENDING') {
+      throw new BadRequestException(
+        'Cannot add products to a non-pending order',
+      );
+    }
+
+    const orderItem = new OrderItem({
+      productName: product.name,
+      price: product.price,
+      quantity,
+    });
+
     const existingItem = this.orderItems.find(
-      (item) => item.productName === product.productName,
+      (item) => item.productName === product.name,
     );
 
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      const orderItem = new OrderItem({
-        productName: product.productName,
-        price: product.price,
-        quantity,
-      });
       this.orderItems.push(orderItem);
     }
 

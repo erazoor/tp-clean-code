@@ -19,15 +19,11 @@ export class DeleteProductUseCase {
       throw new NotFoundException('Product not found');
     }
 
-    const ordersWithProduct = await this.orderRepository.findByProductId(
+    const ordersWithProduct = (await this.orderRepository.findByProductId(
       productId,
-    );
+    )) as any[];
 
-    if (Array.isArray(ordersWithProduct) && ordersWithProduct.length > 0) {
-      throw new ConflictException(
-        'Cannot delete product linked to an existing order',
-      );
-    }
+    product.validateCanBeDeleted(ordersWithProduct.length > 0);
 
     await this.productRepository.removeProduct(product);
   }

@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('product')
@@ -35,5 +36,31 @@ export class Product {
     this.description = description;
     this.stock = stock || 0;
     this.isActive = true;
+  }
+
+  validateCanBeDeleted(isLinkedToOrder: boolean): void {
+    if (isLinkedToOrder) {
+      throw new ConflictException(
+        'Cannot delete product linked to an existing order',
+      );
+    }
+  }
+
+  modify(
+    name: string,
+    price: number,
+    description: string,
+    stock?: number,
+  ): void {
+    if (!name || !price || !description) {
+      throw new Error(
+        'Name, price, and description are required to modify a product.',
+      );
+    }
+
+    this.name = name;
+    this.price = price;
+    this.description = description;
+    this.stock = stock ?? this.stock;
   }
 }

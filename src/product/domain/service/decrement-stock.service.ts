@@ -3,7 +3,7 @@ import { ProductRepositoryInterface } from '../port/persistance/product.reposito
 import { EmailServiceInterface } from 'src/product/infrastructure/email/email.service.interface';
 
 @Injectable()
-export class DecrementStockUseCase {
+export class DecrementStockService {
   constructor(
     @Inject('ProductRepositoryInterface')
     private readonly productRepository: ProductRepositoryInterface,

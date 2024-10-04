@@ -15,13 +15,7 @@ export class CreateProductUseCase {
     description: string,
     stock?: number,
   ): Promise<Product> {
-    if (!name || !price || !description) {
-      throw new Error(
-        'Name, price, and description are required to create a product.',
-      );
-    }
-
-    const product = new Product(name, price, description, stock ?? 0);
+    const product = new Product(name, price, description, stock);
 
     return this.productRepository.save(product);
   }

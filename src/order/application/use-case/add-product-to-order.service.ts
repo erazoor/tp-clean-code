@@ -7,7 +7,7 @@ import {
 import { Order } from 'src/order/domain/entity/order.entity';
 import { OrderRepositoryInterface } from 'src/order/domain/port/persistance/order.repository.interface';
 import { ProductRepositoryInterface } from 'src/product/domain/port/persistance/product.repository.interface';
-import { DecrementStockUseCase } from 'src/product/domain/service/decrement-stock.service';
+import { DecrementStockService } from 'src/product/domain/service/decrement-stock.service';
 
 @Injectable()
 export class AddProductToOrderUseCase {
@@ -16,8 +16,8 @@ export class AddProductToOrderUseCase {
     private readonly orderRepository: OrderRepositoryInterface,
     @Inject('ProductRepositoryInterface')
     private readonly productRepository: ProductRepositoryInterface,
-    @Inject('DecrementStockUseCase')
-    private readonly decrementStockUseCase: DecrementStockUseCase,
+    @Inject('DecrementStockService')
+    private readonly DecrementStockService: DecrementStockService,
   ) {}
 
   async execute(
@@ -30,23 +30,14 @@ export class AddProductToOrderUseCase {
       throw new NotFoundException('Order not found');
     }
 
-    if (order.getStatus() !== 'PENDING') {
-      throw new BadRequestException(
-        'Cannot add products to a non-pending order',
-      );
-    }
-
     const product = await this.productRepository.findById(productId);
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    await this.decrementStockUseCase.execute(productId, quantity);
+    await this.DecrementStockService.execute(productId, quantity);
 
-    order.addProduct(
-      { productName: product.name, price: product.price },
-      quantity,
-    );
+    order.addProduct(product, quantity);
 
     await this.orderRepository.save(order);
     return order;

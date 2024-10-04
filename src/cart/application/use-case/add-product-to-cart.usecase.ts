@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CartRepositoryInterface } from 'src/cart/domain/port/persistance/cart.repository.interface';
 import { ProductRepositoryInterface } from 'src/product/domain/port/persistance/product.repository.interface';
-import { DecrementStockUseCase } from 'src/product/domain/service/decrement-stock.service';
+import { DecrementStockService } from 'src/product/domain/service/decrement-stock.service';
 import { Cart } from 'src/cart/domain/entity/cart.entity';
 import { CartItem } from 'src/cart/domain/entity/cart-item.entity';
 import { ApplyPromotionToOrderUseCase } from 'src/promotion/domain/service/apply-promotion-to-order.service';
@@ -18,8 +18,8 @@ export class AddProductToCartUseCase {
     private readonly cartRepository: CartRepositoryInterface,
     @Inject('ProductRepositoryInterface')
     private readonly productRepository: ProductRepositoryInterface,
-    @Inject('DecrementStockUseCase')
-    private readonly decrementStockUseCase: DecrementStockUseCase,
+    @Inject('DecrementStockService')
+    private readonly decrementStockService: DecrementStockService,
     @Inject('ApplyPromotionToOrderUseCase')
     private readonly applyPromotionToOrderUseCase: ApplyPromotionToOrderUseCase,
   ) {}
@@ -40,11 +40,7 @@ export class AddProductToCartUseCase {
       throw new NotFoundException('Product not found');
     }
 
-    if (product.stock < quantity) {
-      throw new BadRequestException('Not enough stock for this product');
-    }
-
-    await this.decrementStockUseCase.execute(productId, quantity);
+    await this.decrementStockService.execute(productId, quantity);
 
     const cartItem = new CartItem(product, quantity);
     cart.addProduct(cartItem);
