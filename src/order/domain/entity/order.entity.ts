@@ -9,6 +9,8 @@ import {
 import { Expose } from 'class-transformer';
 
 import { BadRequestException } from '@nestjs/common';
+import { Product } from 'src/product/domain/entity/product.entity';
+import { Promotion } from 'src/promotion/domain/entity/promotion.entity';
 
 export interface CreateOrderCommand {
   items: ItemDetailCommand[];
@@ -52,9 +54,7 @@ export class Order {
   @Expose({ groups: ['group_orders'] })
   customerName: string;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
-    nullable: true,
-  })
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   @Expose({ groups: ['group_orders'] })
   orderItems: OrderItem[];
 
@@ -86,24 +86,15 @@ export class Order {
   @Expose({ groups: ['group_orders'] })
   private cancelReason: string | null;
 
-  // methode factory : permet de ne pas utiliser le constructor
-  // car le constructor est utilisé par typeorm
-  // public createOrder(createOrderCommand: CreateOrderCommand): Order {
-  //   this.verifyOrderCommandIsValid(createOrderCommand);
-  //   this.verifyMaxItemIsValid(createOrderCommand);
+  @Column()
+  totalAmount: number;
 
-  //   this.orderItems = createOrderCommand.items.map(
-  //     (item) => new OrderItem(item),
-  //   );
+  @Column({ nullable: true })
+  promotionCode: string;
 
-  //   this.customerName = createOrderCommand.customerName;
-  //   this.shippingAddress = createOrderCommand.shippingAddress;
-  //   this.invoiceAddress = createOrderCommand.invoiceAddress;
-  //   this.status = OrderStatus.PENDING;
-  //   this.price = this.calculateOrderAmount(createOrderCommand.items);
-
-  //   return this;
-  // }
+  getStatus(): string {
+    return this.status;
+  }
 
   public constructor(createOrderCommand?: CreateOrderCommand) {
     if (!createOrderCommand) {
@@ -227,5 +218,72 @@ export class Order {
       .map((item) => item.productName)
       .join(', ');
     return `invoice number ${this.id}, with items: ${itemsNames}`;
+  }
+
+  addProduct(
+    product: { productName: string; price: number },
+    quantity: number,
+  ): void {
+    const existingItem = this.orderItems.find(
+      (item) => item.productName === product.productName,
+    );
+
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      const orderItem = new OrderItem({
+        productName: product.productName,
+        price: product.price,
+        quantity,
+      });
+      this.orderItems.push(orderItem);
+    }
+
+    this.recalculateTotal();
+  }
+
+  recalculateTotal(): void {
+    this.totalAmount = this.orderItems.reduce((total, item) => {
+      return total + item.price * item.quantity;
+    }, 0);
+  }
+
+  applyPromotion(promotion: Promotion): void {
+    this.promotionCode = promotion.code;
+    this.totalAmount -= promotion.amount;
+
+    if (this.totalAmount < 0) {
+      this.totalAmount = 0;
+    }
+  }
+
+  changeStatus(newStatus: string): void {
+    const allowedTransitions = {
+      PENDING: ['PAID', 'CANCELLED'],
+      PAID: ['SHIPPED'],
+    };
+
+    const currentStatusTransitions = allowedTransitions[this.status];
+
+    if (
+      !currentStatusTransitions ||
+      !currentStatusTransitions.includes(newStatus)
+    ) {
+      throw new Error(
+        `Cannot change order status from ${this.status} to ${newStatus}`,
+      );
+    }
+
+    this.status = newStatus;
+  }
+
+  cancelOrder(reason: string): void {
+    if (this.status === 'SHIPPED') {
+      throw new Error('Cannot cancel a shipped order');
+    }
+
+    this.status = 'CANCELLED';
+    this.cancelReason = reason;
+    this.cancelAt = new Date();
   }
 }

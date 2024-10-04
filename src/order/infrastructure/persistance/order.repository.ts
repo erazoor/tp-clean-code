@@ -12,11 +12,10 @@ export default class OrderRepositoryTypeOrm
   }
 
   async findById(id: string): Promise<Order | null> {
-    const queryBuilder = this.createQueryBuilder('order');
-
-    queryBuilder.where('order.id = :id', { id });
-
-    return queryBuilder.getOne();
+    return this.findOne({
+      where: { id },
+      relations: ['orderItems', 'orderItems.product'],
+    });
   }
 
   async findAll(): Promise<Order[]> {
@@ -31,6 +30,13 @@ export default class OrderRepositoryTypeOrm
     queryBuilder.where('order.customerName = :customerName', { customerName });
 
     return queryBuilder.getMany();
+  }
+
+  async findByProductId(productId: string): Promise<Order[]> {
+    return this.createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderItems', 'orderItem')
+      .where('orderItem.productId = :productId', { productId })
+      .getMany();
   }
 
   async deleteOrder(id: string): Promise<void> {

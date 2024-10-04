@@ -12,8 +12,8 @@ export class CancelOrderService {
       throw new NotFoundException('Pas de commande');
     }
 
-    order.cancel(cancelReason);
+    order.cancelOrder(cancelReason);
 
-    return this.orderRepository.save(order);
+    return await this.orderRepository.save(order);
   }
 }
