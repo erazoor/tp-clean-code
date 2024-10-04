@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
-import { Product } from 'src/product/domain/entity/product.entity';
+import { Product } from '../../../product/domain/entity/product.entity';
 import { BadRequestException } from '@nestjs/common';
 
 @Entity('cart_item')

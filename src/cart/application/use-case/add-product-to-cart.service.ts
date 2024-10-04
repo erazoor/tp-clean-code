@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CartRepositoryInterface } from 'src/cart/domain/port/persistance/cart.repository.interface';
 import { ProductRepositoryInterface } from 'src/product/domain/port/persistance/product.repository.interface';
 import { DecrementStockService } from 'src/product/domain/service/decrement-stock.service';
